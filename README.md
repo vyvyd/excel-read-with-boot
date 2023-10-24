@@ -8,8 +8,8 @@ This project is a working example of how to read an excel file through a web end
 
 - [X] Create a sample excel file and check it in 
 - [X] Create database setup instructions
-- [ ] Controller Endpoint for reading an excel file 
-- [ ] Verify that the data has been written to the database
+- [X] Controller Endpoint for reading an excel file 
+- [X] Verify that the data has been written to the database
 
 ### Out of scope 
 
@@ -24,8 +24,7 @@ Have a locally running instance of PostgreSQL. You could choose to run a docker 
 #### Create a user and database
 
 ```sql
-CREATE ROLE "helloexcel";
-ALTER ROLE "helloexcel" WITH LOGIN;
+CREATE ROLE "helloexcel" SUPERUSER LOGIN PASSWORD 'password';;
 CREATE DATABASE "helloexcel" with OWNER "helloexcel";
 ```
 
