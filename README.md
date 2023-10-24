@@ -6,8 +6,8 @@ This project is a working example of how to read an excel file through a web end
 
 ## Tasks 
 
-- [ ] Create a sample excel file and check it in 
-- [ ] Create database setup instructions
+- [X] Create a sample excel file and check it in 
+- [X] Create database setup instructions
 - [ ] Controller Endpoint for reading an excel file 
 - [ ] Verify that the data has been written to the database
 
