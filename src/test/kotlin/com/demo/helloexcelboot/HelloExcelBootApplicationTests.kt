@@ -26,9 +26,13 @@ class HelloExcelBootApplicationTests {
     fun contextLoads() {
     }
 
+    /**
+     * Ensure you have a local database setup before you run
+     * this test
+     */
     @Test
     fun writesContentsToTheDatabase() {
-        val excelFile = { name: String -> this.javaClass.getResourceAsStream(name) }
+        val excelFile = { name: String -> checkNotNull(this.javaClass.classLoader.getResourceAsStream(name)) }
 
         mockMvc.perform(
             multipart("/contacts/upload").file(
