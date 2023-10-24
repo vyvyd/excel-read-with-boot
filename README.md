@@ -25,7 +25,8 @@ Have a locally running instance of PostgreSQL. You could choose to run a docker 
 
 ```sql
 CREATE ROLE "helloexcel";
-CREATE DATABASE "helloexcel" with OWNER "helloexcel";   
+ALTER ROLE "helloexcel" WITH LOGIN;
+CREATE DATABASE "helloexcel" with OWNER "helloexcel";
 ```
 
 #### Create a schema 
