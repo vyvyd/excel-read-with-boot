@@ -5,14 +5,11 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import java.io.File
 
 
 @SpringBootTest
@@ -33,20 +30,20 @@ class HelloExcelBootApplicationTests {
     fun writesContentsToTheDatabase() {
         val excelFile = { name: String -> this.javaClass.getResourceAsStream(name) }
 
-        val file = MockMultipartFile(
-            "SampleExcelWorkbook",
-            excelFile("SampleExcelWorkbook")
-        )
-
         mockMvc.perform(
-            multipart("/contacts/upload").file(file)
+            multipart("/contacts/upload").file(
+                MockMultipartFile(
+                    "file",
+                    excelFile("SampleExcelWorkbook.xlsx")
+                )
+            )
         ).andExpect(status().isAccepted)
 
         val rowCount = jdbcTemplate.queryForObject("""
             SELECT COUNT(1) FROM "helloexcel"."contacts"
         """.trimIndent(), Integer::class.java);
 
-        assertEquals(0, rowCount)
+        assertEquals(2, rowCount)
     }
 }
 
