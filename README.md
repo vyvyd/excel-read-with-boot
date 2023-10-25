@@ -39,3 +39,7 @@ CREATE TABLE "helloexcel"."contacts"(
       email VARCHAR(255)
 );
 ```
+
+#### Run the test
+
+There is a single `ApplicationTest.kt` in the project. Now we should be able to run it and see the test pass.
