@@ -5,16 +5,16 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 interface ContactsDB {
-    fun refreshContacts(allContacts: List<Contact>)
+    fun refreshAllContacts(allContacts: List<Contact>)
 }
 
 @Component
-class JDBCContactsDB(
+class JDBCBasedContactsDB(
     private val jdbcTemplate: JdbcTemplate
 ) : ContactsDB {
 
     @Transactional
-    override fun refreshContacts(allContacts: List<Contact>) {
+    override fun refreshAllContacts(allContacts: List<Contact>) {
         removeAllEntries();
         allContacts.forEach {
             addContact(it.name, it.email)
