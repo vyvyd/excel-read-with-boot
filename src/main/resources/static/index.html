@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Contacts Excel</title>
+    <script type="text/javascript" src="./file-upload.js"></script>
+</head>
+<body>
+<form action="/contacts/upload" enctype="multipart/form-data" method="post" name="uploadform">
+    <input type="file" id="file" name="file" accept=".xls,.xlsx">
+    <input type="submit" value="Upload File">
+</form>
+<div id="output">
+
+</div>
+
+<script>
+    const fileInputElement = document.getElementById('file');
+
+    fileInputElement.addEventListener('change', () => {
+        fileUpload(
+            fileInputElement.files[0],
+            "/contacts/upload",
+            (response) => {
+                document.querySelector("#output").innerHTML = "<h2> Status: Uploaded!</h2><p>"+ JSON.stringify(response, null, 2).replaceAll('\n', '<br/>') + "</p>"
+            },
+            (error) => {
+                document.querySelector("#output").innerHTML = "<h2> Status: Failure!</h2><p>" + JSON.stringify(error, null, 2).replaceAll('\n', '<br/>') + "</p>"
+            }
+        )
+    }, false);
+
+</script>
+</body>
+</html>

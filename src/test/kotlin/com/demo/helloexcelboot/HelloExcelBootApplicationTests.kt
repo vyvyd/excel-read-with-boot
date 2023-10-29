@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 
@@ -41,7 +42,15 @@ class HelloExcelBootApplicationTests {
                     excelFile("SampleExcelWorkbook.xlsx")
                 )
             )
-        ).andExpect(status().isAccepted)
+        ).andExpectAll(
+            status().isAccepted,
+            content().json(
+                """{
+              "recordsUpdated": 2,
+              "errorMessage": null
+            }
+            """.trimIndent())
+        )
 
         val rowCount = jdbcTemplate.queryForObject("""
             SELECT COUNT(1) FROM "helloexcel"."contacts"

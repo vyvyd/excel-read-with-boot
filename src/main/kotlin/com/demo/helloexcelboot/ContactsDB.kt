@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 interface ContactsDB {
-    fun refreshAllContacts(allContacts: List<Contact>)
+    fun refreshAllContacts(allContacts: List<Contact>) : UploadFileResult
 }
 
 @Component
@@ -14,10 +14,27 @@ class JDBCBasedContactsDB(
 ) : ContactsDB {
 
     @Transactional
-    override fun refreshAllContacts(allContacts: List<Contact>) {
-        removeAllEntries();
-        allContacts.forEach {
-            addContact(it.name, it.email)
+    override fun refreshAllContacts(allContacts: List<Contact>) : UploadFileResult {
+        return withErrorHandling {
+            removeAllEntries();
+            allContacts.forEach {
+                addContact(it.name, it.email)
+            }
+            UploadFileResult(
+                recordsUpdated = allContacts.size,
+                errorMessage = null
+            )
+        }
+    }
+
+    fun withErrorHandling(block : () -> UploadFileResult) : UploadFileResult {
+        return try {
+            block()
+        } catch (ex: Exception) {
+            UploadFileResult(
+                recordsUpdated = 0,
+                errorMessage = ex.message
+            )
         }
     }
 
