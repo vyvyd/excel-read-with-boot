@@ -6,10 +6,21 @@ This project is a working example of how to read an excel file through a web end
 
 ## Tasks 
 
+<details>
+  <summary>Phase 1</summary>
 - [X] Create a sample excel file and check it in 
 - [X] Create database setup instructions
 - [X] Controller Endpoint for reading an excel file 
 - [X] Verify that the data has been written to the database
+</details>
+
+### Phase 2 
+
+- [ ] Convert the excel format to take an list of ISBNs
+  - [ ] README changes for DB schema
+- [ ] Use a backend-job setup to fetch book details from ISBN + write to DB
+- [ ] Display a final list of books with details
+- [ ] Display progressive update on UI when fetching book details
 
 ### Out of scope 
 
