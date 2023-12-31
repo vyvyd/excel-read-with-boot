@@ -49,9 +49,9 @@ Connect to the database `library_management` as role `app_user`
 CREATE SCHEMA "inventory";
 
 CREATE TABLE "inventory"."books"(
-      name VARCHAR(255),
-      isbn VARCHAR(255),
-      author VARCHAR(255)
+      isbn VARCHAR(255) NOT NULL UNIQUE,
+      title VARCHAR(255) NOT NULL,
+      author VARCHAR(255) NOT NULL 
 );
 ```
 
