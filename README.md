@@ -16,8 +16,9 @@ This project is a working example of how to read an excel file through a web end
 
 ### Phase 2 
 
-- [ ] Convert the excel format to take an list of ISBNs
-  - [ ] README changes for DB schema
+- [X] Convert the excel format to take an list of ISBNs
+  - [X] README changes for DB schema
+  - [ ] Upload a list of ISBNs that create new 'job' entries
 - [ ] Use a backend-job setup to fetch book details from ISBN + write to DB
 - [ ] Display a final list of books with details
 - [ ] Display progressive update on UI when fetching book details
@@ -35,19 +36,22 @@ Have a locally running instance of PostgreSQL. You could choose to run a docker 
 #### Create a user and database
 
 ```sql
-CREATE ROLE "helloexcel" SUPERUSER LOGIN PASSWORD 'password';;
-CREATE DATABASE "helloexcel" with OWNER "helloexcel";
+CREATE ROLE "app_user" SUPERUSER LOGIN PASSWORD 'password';
+
+CREATE DATABASE "library_management" with OWNER "app_user";
 ```
 
 #### Create a schema 
 
-Connect to the database `helloexcel` as role `helloexcel`
+Connect to the database `library_management` as role `app_user`
 
 ```sql
-CREATE SCHEMA "helloexcel";
-CREATE TABLE "helloexcel"."contacts"(
+CREATE SCHEMA "inventory";
+
+CREATE TABLE "inventory"."books"(
       name VARCHAR(255),
-      email VARCHAR(255)
+      isbn VARCHAR(255),
+      author VARCHAR(255)
 );
 ```
 

@@ -1,5 +1,6 @@
 package com.demo.helloexcelboot
 
+import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -9,16 +10,12 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 
 
 @SpringBootTest
 @AutoConfigureMockMvc
 class HelloExcelBootApplicationTests {
-
-    @Autowired
-    private lateinit var jdbcTemplate: JdbcTemplate
 
     @Autowired
     private lateinit var mockMvc: MockMvc;
@@ -27,16 +24,12 @@ class HelloExcelBootApplicationTests {
     fun contextLoads() {
     }
 
-    /**
-     * Ensure you have a local database setup before you run
-     * this test
-     */
     @Test
     fun writesContentsToTheDatabase() {
         val excelFile = { name: String -> checkNotNull(this.javaClass.classLoader.getResourceAsStream(name)) }
 
         mockMvc.perform(
-            multipart("/contacts/upload").file(
+            multipart("/books/import").file(
                 MockMultipartFile(
                     "file",
                     excelFile("SampleExcelWorkbook.xlsx")
@@ -44,19 +37,10 @@ class HelloExcelBootApplicationTests {
             )
         ).andExpectAll(
             status().isAccepted,
-            content().json(
-                """{
-              "recordsUpdated": 2,
-              "errorMessage": null
-            }
-            """.trimIndent())
+            jsonPath("$.id",not(emptyOrNullString())),
+            jsonPath("$.toImport", contains("978-0590353427", "978-1338216660")),
+            jsonPath("$.errored", empty<String>())
         )
-
-        val rowCount = jdbcTemplate.queryForObject("""
-            SELECT COUNT(1) FROM "helloexcel"."contacts"
-        """.trimIndent(), Integer::class.java);
-
-        assertEquals(2, rowCount)
     }
 }
 

@@ -1,3 +1,4 @@
+/*
 package com.demo.helloexcelboot
 
 import org.springframework.jdbc.core.JdbcTemplate
@@ -5,7 +6,7 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 interface ContactsDB {
-    fun refreshAllContacts(allContacts: List<Contact>) : UploadFileResult
+    fun refreshAllContacts(allContacts: List<BookToImport>) : NewImportJobResult
 }
 
 @Component
@@ -14,24 +15,24 @@ class JDBCBasedContactsDB(
 ) : ContactsDB {
 
     @Transactional
-    override fun refreshAllContacts(allContacts: List<Contact>) : UploadFileResult {
+    override fun refreshAllContacts(allContacts: List<BookToImport>) : NewImportJobResult {
         return withErrorHandling {
             removeAllEntries();
             allContacts.forEach {
                 addContact(it.name, it.email)
             }
-            UploadFileResult(
+            NewImportJobResult(
                 recordsUpdated = allContacts.size,
                 errorMessage = null
             )
         }
     }
 
-    fun withErrorHandling(block : () -> UploadFileResult) : UploadFileResult {
+    fun withErrorHandling(block : () -> NewImportJobResult) : NewImportJobResult {
         return try {
             block()
         } catch (ex: Exception) {
-            UploadFileResult(
+            NewImportJobResult(
                 recordsUpdated = 0,
                 errorMessage = ex.message
             )
@@ -52,4 +53,4 @@ class JDBCBasedContactsDB(
 
 
 
-}
+}*/

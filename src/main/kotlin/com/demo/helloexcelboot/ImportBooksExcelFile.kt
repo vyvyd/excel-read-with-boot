@@ -4,15 +4,15 @@ import org.dhatim.fastexcel.reader.ReadableWorkbook
 import org.dhatim.fastexcel.reader.Row
 import java.io.InputStream
 
-class ContactsExcelFile(
-    private val inputStream: InputStream
+class ImportBooksExcelFile(
+    private val inputStream: InputStream,
 ) {
 
-    fun allContacts(): List<Contact> {
+    fun allNewBooksToImport(): List<BookToImport> {
         val workbook = ReadableWorkbook(inputStream)
 
         val maybeSheetWithContactNames = workbook.sheets
-            .filter { it.name == "Names" }
+            .filter { it.name == "Import" }
             .findFirst()
 
         val maybeAllRowsInThatSheet = maybeSheetWithContactNames
@@ -20,18 +20,17 @@ class ContactsExcelFile(
             .map { it.drop(1) } // since we don't want headers
 
         val contacts = maybeAllRowsInThatSheet
-            .map { it.toContacts() }
+            .map { it.toListOfBooksToImport() }
             .orElse(emptyList())
 
         workbook.close()
         return contacts
     }
 
-    private fun List<Row>.toContacts() : List<Contact> {
+    private fun List<Row>.toListOfBooksToImport() : List<BookToImport> {
         return this.map { row ->
-            Contact(
-                row.getCellText(0), // Name column
-                row.getCellText(1)  // Email column
+            BookToImport(
+                row.getCellText(0).trim(), // ISBN column
             )
         }
     }
