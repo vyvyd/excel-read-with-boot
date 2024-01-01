@@ -2,6 +2,7 @@ package com.demo.helloexcelboot
 
 import com.demo.helloexcelboot.ImportResult.Error
 import com.demo.helloexcelboot.ImportResult.Ok
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
@@ -9,15 +10,14 @@ import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.support.WebClientAdapter
 import org.springframework.web.service.annotation.GetExchange
 import org.springframework.web.service.annotation.HttpExchange
 import org.springframework.web.service.invoker.HttpServiceProxyFactory
-import org.springframework.web.service.invoker.createClient
 import java.lang.Exception
 import java.util.*
 
@@ -32,29 +32,35 @@ sealed class ImportResult {
     data class Error(val isbn: String, val exception: Exception?) : ImportResult()
 }
 
-@HttpExchange(url="/isbn")
-interface BookByISBNClient {
-    @GetExchange("/{isbn}")
-    fun getBookDetail(@PathVariable isbn: String): BookDetail
+@HttpExchange
+interface OpenLibraryAPIClient {
+
+    @GetExchange("/search.json")
+    fun searchBy(@RequestParam isbn: String): OpenLibrarySearchResults
 }
 
-data class BookDetail(
-    val title: String,
-    val author: String
+data class OpenLibrarySearchResults(
+    val docs: List<OpenLibraryDocument>,
+)
+
+data class OpenLibraryDocument(
+    @JsonProperty("title")       val title:String,
+    @JsonProperty("author_name") val authors: List<String>
 )
 
 @Configuration
-class BooksByISBNClientConfiguration {
+class OpenLibraryAPIClientConfiguration {
     @Bean
-    fun bookByISBNClient(): BookByISBNClient {
+    fun openLibraryAPIClient(): OpenLibraryAPIClient {
         val webClient = WebClient.builder()
             .baseUrl("http://localhost:6557") //TODO: extract to application.properties
+            .codecs { it.defaultCodecs().maxInMemorySize(1024 * 1024) }
             .build()
 
         return HttpServiceProxyFactory
             .builder(WebClientAdapter.forClient(webClient))
             .build()
-            .createClient(BookByISBNClient::class.java)
+            .createClient(OpenLibraryAPIClient::class.java)
     }
 
 }
@@ -62,17 +68,22 @@ class BooksByISBNClientConfiguration {
 class ImportBookByISBNJob(
     private val isbn: String,
     private val jdbcTemplate: JdbcTemplate,
-    private val bookByISBNClient: BookByISBNClient
+    private val openLibraryAPIClient: OpenLibraryAPIClient
 ) {
     fun import(): ImportResult {
-        val bookDetail = bookByISBNClient.getBookDetail(isbn)
+        val bookDetail = openLibraryAPIClient.searchBy(isbn)
+        check(bookDetail.docs.size == 1)
+
+        val title = bookDetail.docs.first().title
+        val author = bookDetail.docs.first().authors.joinToString(", ")
+
         jdbcTemplate.update(
             """
                 INSERT INTO "inventory"."books"("title","isbn","author") VALUES (?, ?, ?)
                 ON CONFLICT("isbn")
                 DO UPDATE SET "title" = excluded."title", "author" = excluded."author"
             """.trimIndent(),
-            bookDetail.title, isbn, bookDetail.author
+            title, isbn, author
         );
         return Ok(isbn)
     }
@@ -82,14 +93,14 @@ class ImportBookByISBNJob(
 @Component
 class ImportJobs(
     private val jdbcTemplate: JdbcTemplate,
-    private val bookByISBNClient: BookByISBNClient
+    private val openLibraryAPIClient: OpenLibraryAPIClient
 ) {
     fun enqueue(booksToImport: List<BookToImportByISBN>): ImportJobStatus {
         val jobs = booksToImport.map {
             ImportBookByISBNJob(
                isbn =  it.isbn,
                jdbcTemplate = jdbcTemplate,
-               bookByISBNClient = bookByISBNClient
+               openLibraryAPIClient = openLibraryAPIClient
             )
         }
         val importJobResults = jobs.map { it.import() }

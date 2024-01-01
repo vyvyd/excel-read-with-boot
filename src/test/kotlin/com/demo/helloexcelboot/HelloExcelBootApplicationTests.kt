@@ -43,18 +43,34 @@ class HelloExcelBootApplicationTests {
         ).andExpectAll(
             status().isAccepted,
             jsonPath("$.id",not(emptyOrNullString())),
-            jsonPath("$.toImport", contains("978-0590353427", "978-1338216660")),
+            jsonPath("$.toImport", contains(
+                "9780590353427",
+                "9781338216660",
+                "9780006479888",
+                "9780141199702",
+                "9780201835953"
+            )),
             jsonPath("$.errored", empty<String>())
+
         )
 
         val allBooks = getAllImportedBooksFromDB(jdbcTemplate)
-        assertEquals(2, allBooks.size)
+        assertEquals(5, allBooks.size)
 
-        assertTrue(allBooks[0].author.isEmpty().not())
-        assertTrue(allBooks[0].title.isEmpty().not())
+        assertEquals("Roald Dahl", allBooks[0].author)
+        assertEquals("Fantastic Mr Fox", allBooks[0].title)
 
-        assertTrue(allBooks[1].author.isEmpty().not())
-        assertTrue(allBooks[1].title.isEmpty().not())
+        assertEquals("Jack Thorne, John Tiffany, J. K. Rowling, Jack Thorne, Jean-François Ménard", allBooks[1].author)
+        assertEquals("Harry Potter and the Cursed Child", allBooks[1].title)
+
+        assertEquals("George R. R. Martin", allBooks[2].author)
+        assertEquals("A Game of Thrones", allBooks[2].title)
+
+        assertEquals("Charles Dickens", allBooks[3].author)
+        assertEquals("A Tale of Two Cities", allBooks[3].title)
+
+        assertEquals("Frederick P. Brooks", allBooks[4].author)
+        assertEquals("The Mythical Man-Month", allBooks[4].title)
     }
 
     private fun getAllImportedBooksFromDB(
