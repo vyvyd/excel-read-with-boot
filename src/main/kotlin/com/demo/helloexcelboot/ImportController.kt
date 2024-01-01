@@ -19,8 +19,8 @@ import org.springframework.web.reactive.function.client.support.WebClientAdapter
 import org.springframework.web.service.annotation.GetExchange
 import org.springframework.web.service.annotation.HttpExchange
 import org.springframework.web.service.invoker.HttpServiceProxyFactory
-import java.lang.Exception
 import java.util.*
+import kotlin.Exception
 
 data class ImportJobStatus(
     val id: String,
@@ -72,21 +72,27 @@ class ImportBookByISBNJob(
     private val openLibraryAPIClient: OpenLibraryAPIClient
 ) {
     fun import(): ImportResult {
-        val bookDetail = openLibraryAPIClient.searchBy(isbn)
-        check(bookDetail.docs.size == 1)
+        try {
 
-        val title = bookDetail.docs.first().title
-        val author = bookDetail.docs.first().authors.joinToString(", ")
+            val bookDetail = openLibraryAPIClient.searchBy(isbn)
+            check(bookDetail.docs.size == 1)
 
-        jdbcTemplate.update(
-            """
+            val title = bookDetail.docs.first().title
+            val author = bookDetail.docs.first().authors.joinToString(", ")
+
+            jdbcTemplate.update(
+                """
                 INSERT INTO "inventory"."books"("title","isbn","author") VALUES (?, ?, ?)
                 ON CONFLICT("isbn")
                 DO UPDATE SET "title" = excluded."title", "author" = excluded."author"
             """.trimIndent(),
-            title, isbn, author
-        );
-        return Ok(isbn)
+                title, isbn, author
+            );
+            return Ok(isbn)
+        } catch (ex: Exception) {
+            return Error(isbn, ex)
+        }
+
     }
 }
 
@@ -94,7 +100,7 @@ class ImportBookByISBNJob(
 @Component
 class ImportJobs(
     private val jdbcTemplate: JdbcTemplate,
-    private val openLibraryAPIClient: OpenLibraryAPIClient
+    private val openLibraryAPIClient: OpenLibraryAPIClient,
 ) {
     fun enqueue(booksToImport: List<BookToImportByISBN>): ImportJobStatus {
         val jobs = booksToImport.map {

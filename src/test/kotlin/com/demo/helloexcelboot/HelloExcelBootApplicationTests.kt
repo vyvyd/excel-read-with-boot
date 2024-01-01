@@ -43,13 +43,14 @@ class HelloExcelBootApplicationTests {
         ).andExpectAll(
             status().isAccepted,
             jsonPath("$.id",not(emptyOrNullString())),
-            jsonPath("$.toImport", contains(
+            jsonPath("$.toImport", containsInAnyOrder(
                 "9780590353427",
                 "9781338216660",
                 "9780006479888",
                 "9780141199702",
                 "9780201835953"
-            )),
+            )
+            ),
             jsonPath("$.errored", empty<String>())
 
         )
@@ -78,6 +79,61 @@ class HelloExcelBootApplicationTests {
         })
 
     }
+
+
+    @Test
+    fun writesContentsToTheDatabaseButIgnoresISBNWithErrors() {
+        val excelFile = { name: String -> checkNotNull(this.javaClass.classLoader.getResourceAsStream(name)) }
+
+        mockMvc.perform(
+            multipart("/books/import").file(
+                MockMultipartFile(
+                    "file",
+                    excelFile("SampleExcelWorkbookWithInvalidISBN.xlsx")
+                )
+            )
+        ).andExpectAll(
+            status().isAccepted,
+            jsonPath("$.id",not(emptyOrNullString())),
+            jsonPath("$.toImport", containsInAnyOrder(
+                "9780590353427",
+                "9781338216660",
+                "9780006479888",
+                "9780141199702",
+                "9780201835953"
+            )
+            ),
+            jsonPath("$.errored", contains(
+                "1245678"
+            ))
+
+        )
+
+        val allBooks = getAllImportedBooksFromDB(jdbcTemplate)
+        assertEquals(5, allBooks.size)
+
+        assertTrue(allBooks.any {
+            it.author == "Roald Dahl" && it.title == "Fantastic Mr Fox"
+        })
+
+        assertTrue(allBooks.any {
+            it.author == "Jack Thorne, John Tiffany, J. K. Rowling, Jack Thorne, Jean-François Ménard" && it.title == "Harry Potter and the Cursed Child"
+        })
+
+        assertTrue(allBooks.any {
+            it.author == "George R. R. Martin" && it.title == "A Game of Thrones"
+        })
+
+        assertTrue(allBooks.any {
+            it.author == "Charles Dickens" && it.title == "A Tale of Two Cities"
+        })
+
+        assertTrue(allBooks.any {
+            it.author == "Frederick P. Brooks" && it.title == "The Mythical Man-Month"
+        })
+
+    }
+
 
     private fun getAllImportedBooksFromDB(
         jdbcTemplate: JdbcTemplate
