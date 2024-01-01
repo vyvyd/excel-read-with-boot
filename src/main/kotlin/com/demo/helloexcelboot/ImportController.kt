@@ -3,6 +3,7 @@ package com.demo.helloexcelboot
 import com.demo.helloexcelboot.ImportResult.Error
 import com.demo.helloexcelboot.ImportResult.Ok
 import com.fasterxml.jackson.annotation.JsonProperty
+import kotlinx.coroutines.*
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
@@ -103,7 +104,15 @@ class ImportJobs(
                openLibraryAPIClient = openLibraryAPIClient
             )
         }
-        val importJobResults = jobs.map { it.import() }
+        val importJobResults = runBlocking {
+            val asyncImportJobs = jobs.map { job ->
+                async(Dispatchers.IO) {
+                    job.import()
+                }
+            }
+            asyncImportJobs.awaitAll()
+        }
+
         return ImportJobStatus(
             id = UUID.randomUUID().toString(),
             toImport = importJobResults.filterIsInstance<Ok>().map { it.isbn},

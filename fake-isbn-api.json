@@ -3,7 +3,7 @@
   "lastMigration": 27,
   "name": "Fake isbn api",
   "endpointPrefix": "",
-  "latency": 0,
+  "latency": 2000,
   "port": 6557,
   "hostname": "",
   "folders": [],
