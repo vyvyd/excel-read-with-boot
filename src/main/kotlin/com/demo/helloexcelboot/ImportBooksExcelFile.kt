@@ -8,7 +8,7 @@ class ImportBooksExcelFile(
     private val inputStream: InputStream,
 ) {
 
-    fun allNewBooksToImport(): List<BookToImport> {
+    fun allNewBooksToImport(): List<BookToImportByISBN> {
         val workbook = ReadableWorkbook(inputStream)
 
         val maybeSheetWithContactNames = workbook.sheets
@@ -27,9 +27,9 @@ class ImportBooksExcelFile(
         return contacts
     }
 
-    private fun List<Row>.toListOfBooksToImport() : List<BookToImport> {
+    private fun List<Row>.toListOfBooksToImport() : List<BookToImportByISBN> {
         return this.map { row ->
-            BookToImport(
+            BookToImportByISBN(
                 row.getCellText(0).trim(), // ISBN column
             )
         }

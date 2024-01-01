@@ -1,5 +1,5 @@
 package com.demo.helloexcelboot
 
-data class BookToImport (
+data class BookToImportByISBN (
     val isbn: String
 )

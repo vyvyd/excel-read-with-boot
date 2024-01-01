@@ -1,7 +1,7 @@
 package com.demo.helloexcelboot
 
 import org.hamcrest.Matchers.*
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -49,6 +49,12 @@ class HelloExcelBootApplicationTests {
 
         val allBooks = getAllImportedBooksFromDB(jdbcTemplate)
         assertEquals(2, allBooks.size)
+
+        assertTrue(allBooks[0].author.isEmpty().not())
+        assertTrue(allBooks[0].title.isEmpty().not())
+
+        assertTrue(allBooks[1].author.isEmpty().not())
+        assertTrue(allBooks[1].title.isEmpty().not())
     }
 
     private fun getAllImportedBooksFromDB(
