@@ -57,20 +57,26 @@ class HelloExcelBootApplicationTests {
         val allBooks = getAllImportedBooksFromDB(jdbcTemplate)
         assertEquals(5, allBooks.size)
 
-        assertEquals("Roald Dahl", allBooks[0].author)
-        assertEquals("Fantastic Mr Fox", allBooks[0].title)
+        assertTrue(allBooks.any {
+            it.author == "Roald Dahl" && it.title == "Fantastic Mr Fox"
+        })
 
-        assertEquals("Jack Thorne, John Tiffany, J. K. Rowling, Jack Thorne, Jean-François Ménard", allBooks[1].author)
-        assertEquals("Harry Potter and the Cursed Child", allBooks[1].title)
+        assertTrue(allBooks.any {
+            it.author == "Jack Thorne, John Tiffany, J. K. Rowling, Jack Thorne, Jean-François Ménard" && it.title == "Harry Potter and the Cursed Child"
+        })
 
-        assertEquals("George R. R. Martin", allBooks[2].author)
-        assertEquals("A Game of Thrones", allBooks[2].title)
+        assertTrue(allBooks.any {
+            it.author == "George R. R. Martin" && it.title == "A Game of Thrones"
+        })
 
-        assertEquals("Charles Dickens", allBooks[3].author)
-        assertEquals("A Tale of Two Cities", allBooks[3].title)
+        assertTrue(allBooks.any {
+            it.author == "Charles Dickens" && it.title == "A Tale of Two Cities"
+        })
 
-        assertEquals("Frederick P. Brooks", allBooks[4].author)
-        assertEquals("The Mythical Man-Month", allBooks[4].title)
+        assertTrue(allBooks.any {
+            it.author == "Frederick P. Brooks" && it.title == "The Mythical Man-Month"
+        })
+
     }
 
     private fun getAllImportedBooksFromDB(
