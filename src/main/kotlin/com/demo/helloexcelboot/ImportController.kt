@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.PostMapping
@@ -98,18 +99,26 @@ class ImportBookByISBNJob(
 
 
 @Component
-class ImportJobs(
+class ImportJobFactory(
     private val jdbcTemplate: JdbcTemplate,
     private val openLibraryAPIClient: OpenLibraryAPIClient,
 ) {
-    fun enqueue(booksToImport: List<BookToImportByISBN>): ImportJobStatus {
-        val jobs = booksToImport.map {
+    fun jobFrom(booksToImport: List<BookToImportByISBN>): List<ImportBookByISBNJob> {
+        return booksToImport.map {
             ImportBookByISBNJob(
                isbn =  it.isbn,
                jdbcTemplate = jdbcTemplate,
                openLibraryAPIClient = openLibraryAPIClient
             )
         }
+    }
+}
+
+@Component
+class ImportJobExecutor() {
+
+    @Async
+    fun executeAsync(jobs: List<ImportBookByISBNJob>) : ImportJobStatus {
         val importJobResults = runBlocking {
             val asyncImportJobs = jobs.map { job ->
                 async(Dispatchers.IO) {
@@ -124,25 +133,25 @@ class ImportJobs(
             toImport = importJobResults.filterIsInstance<Ok>().map { it.isbn},
             errored = importJobResults.filterIsInstance<Error>().map { it.isbn }
         )
-    }
 
+    }
 }
 
 @Controller
 class ImportController(
-    private val importJobs: ImportJobs
+    private val importJobFactory: ImportJobFactory,
+    private val importJobExecutor: ImportJobExecutor
 ){
 
     @PostMapping("/books/import")
     fun uploadFile(
         file: MultipartFile
     ): ResponseEntity<ImportJobStatus> {
+        val excelFile = ImportBooksExcelFile(file.inputStream)
+        val booksToImport = excelFile.allNewBooksToImport()
+        val importJobs = importJobFactory.jobFrom(booksToImport)
 
-        val result = importJobs.enqueue(
-            ImportBooksExcelFile(
-                file.inputStream
-            ).allNewBooksToImport()
-        )
+        val result = importJobExecutor.executeAsync(importJobs)
 
         return ResponseEntity
             .status(HttpStatus.ACCEPTED)
