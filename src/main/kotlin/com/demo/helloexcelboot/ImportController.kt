@@ -1,8 +1,9 @@
 package com.demo.helloexcelboot
 
-import com.demo.helloexcelboot.ImportResult.Error
-import com.demo.helloexcelboot.ImportResult.Ok
+import com.demo.helloexcelboot.ImportJobResult.Error
+import com.demo.helloexcelboot.ImportJobResult.Ok
 import com.demo.helloexcelboot.openlibrary.OpenLibraryAPIClient
+import com.fasterxml.jackson.annotation.JsonProperty
 import kotlinx.coroutines.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -14,15 +15,30 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.multipart.MultipartFile
 import java.util.*
 
-data class ImportJobStatus(
+data class ImportJobsResult(
     val id: String,
     val imported: List<String>,
     val failed: List<String>
-)
+) {
+   companion object {
 
-sealed class ImportResult {
-    data class Ok(val isbn: String) : ImportResult()
-    data class Error(val isbn: String, val exception: Exception?) : ImportResult()
+       fun from(
+           id: String,
+           jobResults: List<ImportJobResult>
+       ): ImportJobsResult {
+           return ImportJobsResult(
+               id = id,
+               imported =  jobResults.filterIsInstance<Ok>().map { it.isbn },
+               failed = jobResults.filterIsInstance<Error>().map { it.isbn }
+           )
+       }
+   }
+}
+
+
+sealed class ImportJobResult {
+    data class Ok(val isbn: String) : ImportJobResult()
+    data class Error(val isbn: String, val exception: Exception?) : ImportJobResult()
 }
 
 class ImportBookByISBNJob(
@@ -30,7 +46,7 @@ class ImportBookByISBNJob(
     private val jdbcTemplate: JdbcTemplate,
     private val openLibraryAPIClient: OpenLibraryAPIClient
 ) {
-    fun import(): ImportResult {
+    fun import(): ImportJobResult {
         try {
 
             val bookDetail = openLibraryAPIClient.searchBy(isbn)
@@ -73,25 +89,21 @@ class ImportBookJobFactory(
 }
 
 @Component
-class ImportJobExecutor() {
+class ImportJobExecutor {
 
     @Async
-    fun executeAsync(jobs: List<ImportBookByISBNJob>) : ImportJobStatus {
-        val importJobResults = runBlocking {
-            val asyncImportJobs = jobs.map { job ->
-                async(Dispatchers.IO) {
-                    job.import()
-                }
-            }
-            asyncImportJobs.awaitAll()
-        }
-
-        return ImportJobStatus(
+    fun executeAsync(jobs: List<ImportBookByISBNJob>) : ImportJobsResult {
+        return ImportJobsResult.from(
             id = UUID.randomUUID().toString(),
-            imported = importJobResults.filterIsInstance<Ok>().map { it.isbn},
-            failed = importJobResults.filterIsInstance<Error>().map { it.isbn }
+            jobResults = runBlocking {
+                val asyncImportJobs = jobs.map { job ->
+                    async(Dispatchers.IO) {
+                        job.import()
+                    }
+                }
+                asyncImportJobs.awaitAll()
+            }
         )
-
     }
 }
 
@@ -104,7 +116,7 @@ class ImportController(
     @PostMapping("/books/import")
     fun uploadFile(
         file: MultipartFile
-    ): ResponseEntity<ImportJobStatus> {
+    ): ResponseEntity<ImportJobsResult> {
         val excelFile = ImportBooksExcelFile(file.inputStream)
         val booksToImport = excelFile.allNewBooksToImport()
         val importJobs = importJobFactory.jobFrom(booksToImport)
