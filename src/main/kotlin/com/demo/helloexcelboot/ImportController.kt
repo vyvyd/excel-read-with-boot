@@ -16,8 +16,8 @@ import java.util.*
 
 data class ImportJobStatus(
     val id: String,
-    val toImport: List<String>,
-    val errored: List<String>
+    val imported: List<String>,
+    val failed: List<String>
 )
 
 sealed class ImportResult {
@@ -88,8 +88,8 @@ class ImportJobExecutor() {
 
         return ImportJobStatus(
             id = UUID.randomUUID().toString(),
-            toImport = importJobResults.filterIsInstance<Ok>().map { it.isbn},
-            errored = importJobResults.filterIsInstance<Error>().map { it.isbn }
+            imported = importJobResults.filterIsInstance<Ok>().map { it.isbn},
+            failed = importJobResults.filterIsInstance<Error>().map { it.isbn }
         )
 
     }

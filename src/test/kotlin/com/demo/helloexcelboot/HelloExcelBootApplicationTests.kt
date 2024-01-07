@@ -43,7 +43,7 @@ class HelloExcelBootApplicationTests {
         ).andExpectAll(
             status().isAccepted,
             jsonPath("$.id",not(emptyOrNullString())),
-            jsonPath("$.toImport", containsInAnyOrder(
+            jsonPath("$.imported", containsInAnyOrder(
                 "9780590353427",
                 "9781338216660",
                 "9780006479888",
@@ -51,7 +51,7 @@ class HelloExcelBootApplicationTests {
                 "9780201835953"
             )
             ),
-            jsonPath("$.errored", empty<String>())
+            jsonPath("$.failed", empty<String>())
 
         )
 
@@ -95,7 +95,7 @@ class HelloExcelBootApplicationTests {
         ).andExpectAll(
             status().isAccepted,
             jsonPath("$.id",not(emptyOrNullString())),
-            jsonPath("$.toImport", containsInAnyOrder(
+            jsonPath("$.imported", containsInAnyOrder(
                 "9780590353427",
                 "9781338216660",
                 "9780006479888",
@@ -103,7 +103,7 @@ class HelloExcelBootApplicationTests {
                 "9780201835953"
             )
             ),
-            jsonPath("$.errored", contains(
+            jsonPath("$.failed", contains(
                 "1245678"
             ))
 
