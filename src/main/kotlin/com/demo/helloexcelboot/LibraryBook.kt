@@ -8,8 +8,3 @@ data class LibraryBook(
     val author: String
 )
 
-class LibraryBooksDB(
-    private val jdbcTemplate: JdbcTemplate
-) {
-
-}
