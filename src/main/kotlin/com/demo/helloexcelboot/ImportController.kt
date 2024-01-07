@@ -2,7 +2,7 @@ package com.demo.helloexcelboot
 
 import com.demo.helloexcelboot.ImportResult.Error
 import com.demo.helloexcelboot.ImportResult.Ok
-import com.fasterxml.jackson.annotation.JsonProperty
+import com.demo.helloexcelboot.openlibrary.OpenLibraryAPIClient
 import kotlinx.coroutines.*
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -13,15 +13,11 @@ import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.support.WebClientAdapter
-import org.springframework.web.service.annotation.GetExchange
-import org.springframework.web.service.annotation.HttpExchange
 import org.springframework.web.service.invoker.HttpServiceProxyFactory
 import java.util.*
-import kotlin.Exception
 
 data class ImportJobStatus(
     val id: String,
@@ -33,22 +29,6 @@ sealed class ImportResult {
     data class Ok(val isbn: String) : ImportResult()
     data class Error(val isbn: String, val exception: Exception?) : ImportResult()
 }
-
-@HttpExchange
-interface OpenLibraryAPIClient {
-
-    @GetExchange("/search.json")
-    fun searchBy(@RequestParam isbn: String): OpenLibrarySearchResults
-}
-
-data class OpenLibrarySearchResults(
-    val docs: List<OpenLibraryDocument>,
-)
-
-data class OpenLibraryDocument(
-    @JsonProperty("title")       val title:String,
-    @JsonProperty("author_name") val authors: List<String>
-)
 
 @Configuration
 class OpenLibraryAPIClientConfiguration {
