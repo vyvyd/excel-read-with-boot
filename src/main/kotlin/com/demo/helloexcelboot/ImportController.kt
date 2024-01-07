@@ -57,7 +57,7 @@ class ImportBookByISBNJob(
 
 
 @Component
-class ImportJobFactory(
+class ImportBookJobFactory(
     private val jdbcTemplate: JdbcTemplate,
     private val openLibraryAPIClient: OpenLibraryAPIClient,
 ) {
@@ -97,7 +97,7 @@ class ImportJobExecutor() {
 
 @Controller
 class ImportController(
-    private val importJobFactory: ImportJobFactory,
+    private val importJobFactory: ImportBookJobFactory,
     private val importJobExecutor: ImportJobExecutor
 ){
 
