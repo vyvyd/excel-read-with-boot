@@ -1,8 +1,11 @@
 package com.demo.helloexcelboot
 
+import org.awaitility.Awaitility.await
 import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.function.Executable
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -13,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import java.sql.ResultSet
+import java.time.Duration
 
 
 @SpringBootTest
@@ -29,6 +33,11 @@ class HelloExcelBootApplicationTests {
     fun contextLoads() {
     }
 
+    @BeforeEach
+    fun beforeEach() {
+        cleanBooksTable()
+    }
+
     @Test
     fun writesContentsToTheDatabase() {
         val excelFile = { name: String -> checkNotNull(this.javaClass.classLoader.getResourceAsStream(name)) }
@@ -40,20 +49,14 @@ class HelloExcelBootApplicationTests {
                     excelFile("SampleExcelWorkbook.xlsx")
                 )
             )
-        ).andExpectAll(
-            status().isAccepted,
-            jsonPath("$.id",not(emptyOrNullString())),
-            jsonPath("$.imported", containsInAnyOrder(
-                "9780590353427",
-                "9781338216660",
-                "9780006479888",
-                "9780141199702",
-                "9780201835953"
-            )
-            ),
-            jsonPath("$.failed", empty<String>())
+        ).andExpect(status().isAccepted)
 
-        )
+        await()
+            .atLeast(Duration.ofMillis(250))
+            .atMost(Duration.ofSeconds(3)) //Mockoon latency is 2000ms
+            .with()
+            .pollInterval(Duration.ofMillis(250))
+            .until { getAllImportedBooksFromDB(jdbcTemplate).size == 5 }
 
         val allBooks = getAllImportedBooksFromDB(jdbcTemplate)
         assertEquals(5, allBooks.size)
@@ -92,22 +95,14 @@ class HelloExcelBootApplicationTests {
                     excelFile("SampleExcelWorkbookWithInvalidISBN.xlsx")
                 )
             )
-        ).andExpectAll(
-            status().isAccepted,
-            jsonPath("$.id",not(emptyOrNullString())),
-            jsonPath("$.imported", containsInAnyOrder(
-                "9780590353427",
-                "9781338216660",
-                "9780006479888",
-                "9780141199702",
-                "9780201835953"
-            )
-            ),
-            jsonPath("$.failed", contains(
-                "1245678"
-            ))
+        ).andExpect(status().isAccepted)
 
-        )
+        await()
+            .atLeast(Duration.ofMillis(250))
+            .atMost(Duration.ofSeconds(3)) //Mockoon latency is 2000ms
+            .with()
+            .pollInterval(Duration.ofMillis(250))
+            .until { getAllImportedBooksFromDB(jdbcTemplate).size == 5 }
 
         val allBooks = getAllImportedBooksFromDB(jdbcTemplate)
         assertEquals(5, allBooks.size)
@@ -141,6 +136,12 @@ class HelloExcelBootApplicationTests {
         return jdbcTemplate.query(
             "SELECT * from \"inventory\".\"books\";",
             BookRowMapper()
+        )
+    }
+
+    private fun cleanBooksTable() {
+        return jdbcTemplate.execute(
+            "TRUNCATE \"inventory\".\"books\";"
         )
     }
 }

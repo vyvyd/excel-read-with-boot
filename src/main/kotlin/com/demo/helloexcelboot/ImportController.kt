@@ -3,7 +3,6 @@ package com.demo.helloexcelboot
 import com.demo.helloexcelboot.ImportJobResult.Error
 import com.demo.helloexcelboot.ImportJobResult.Ok
 import com.demo.helloexcelboot.openlibrary.OpenLibraryAPIClient
-import com.fasterxml.jackson.annotation.JsonProperty
 import kotlinx.coroutines.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.multipart.MultipartFile
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
 data class ImportJobsResult(
     val id: String,
@@ -92,8 +92,8 @@ class ImportBookJobFactory(
 class ImportJobExecutor {
 
     @Async
-    fun executeAsync(jobs: List<ImportBookByISBNJob>) : ImportJobsResult {
-        return ImportJobsResult.from(
+    fun executeAsync(jobs: List<ImportBookByISBNJob>) : CompletableFuture<ImportJobsResult> {
+        val results = ImportJobsResult.from(
             id = UUID.randomUUID().toString(),
             jobResults = runBlocking {
                 val asyncImportJobs = jobs.map { job ->
@@ -104,6 +104,7 @@ class ImportJobExecutor {
                 asyncImportJobs.awaitAll()
             }
         )
+        return CompletableFuture.completedFuture(results)
     }
 }
 
@@ -121,11 +122,11 @@ class ImportController(
         val booksToImport = excelFile.allNewBooksToImport()
         val importJobs = importJobFactory.jobFrom(booksToImport)
 
-        val result = importJobExecutor.executeAsync(importJobs)
+        importJobExecutor.executeAsync(importJobs)
 
         return ResponseEntity
             .status(HttpStatus.ACCEPTED)
-            .body(result)
+            .build()
     }
 
 }
